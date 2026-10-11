@@ -1,0 +1,85 @@
+import os, zipfile
+from pathlib import Path
+
+base = Path("/mnt/data/triadbridge-github-actions")
+workflow_dir = base / ".github" / "workflows"
+workflow_dir.mkdir(parents=True, exist_ok=True)
+
+workflow = """name: TriadBridge Worker CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+  deploy:
+    name: Deploy Worker to Cloudflare
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy Worker
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+"""
+(workflow_dir / "cloudflare-worker.yml").write_text(workflow, encoding="utf-8")
+
+readme = """TriadBridge GitHub Actions workflow
+
+Upload .github/workflows/cloudflare-worker.yml into the root of the
+gmjnidualgpt-lab/GPT-GEMINI repository, preserving the folder structure.
+
+Then add these GitHub Actions repository secrets:
+- CLOUDFLARE_API_TOKEN: Cloudflare API token with permission to deploy Workers
+- CLOUDFLARE_ACCOUNT_ID: 3aac72241bceb27be9c6620520629548
+
+The workflow runs npm test for pushes and pull requests targeting main.
+On pushes to main and manual workflow_dispatch runs, it deploys the Worker.
+
+Important: this workflow deploys the Worker defined by wrangler.jsonc.
+It does not connect the separate Cloudflare Pages project gemdualgpt to Git.
+"""
+(base / "README-INSTRUCTIONS.txt").write_text(readme, encoding="utf-8")
+
+zip_path = Path("/mnt/data/triadbridge-github-actions.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+    z.write(workflow_dir / "cloudflare-worker.yml", ".github/workflows/cloudflare-worker.yml")
+    z.write(base / "README-INSTRUCTIONS.txt", "README-INSTRUCTIONS.txt")
+
+print(f"Created: {zip_path}")
