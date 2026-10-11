@@ -182,8 +182,12 @@ export default {
     const provider = body?.provider;
     const message = body?.message;
     const system = typeof body?.system === "string" ? body.system.slice(0, 4000) : "";
-    if (!["openai", "gemini"].includes(provider)) {
-      return json({ error: "INVALID_PROVIDER", allowed: ["openai", "gemini"] }, 400, cors);
+    if (provider !== "gemini") {
+  return json({
+    error: "FREE_MODE_ONLY",
+    allowed: ["gemini"]
+  }, 400, cors);
+}
     }
     if (typeof message !== "string" || !message.trim() || message.length > 12000) {
       return json({ error: "INVALID_MESSAGE" }, 400, cors);
