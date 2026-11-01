@@ -42,7 +42,7 @@ export default {
    const session=request.headers.get("authorization")?.replace(/^Bearer\s+/i,"") || (cookie?decodeURIComponent(cookie.slice(11)):null);
    if(!session) return json({error:"missing_session"},401);
    
-   if(request.method==="GET" && p==="/api/status") return json({connected:!!session});
+   if(request.method==="GET" && p==="/api/status") return json({connected:!!(session && await env.OAUTH_KV.get("session:"+session))});
    if(request.method==="POST" && p==="/api/logout") {
     if(session) await env.OAUTH_KV.delete("session:"+session);
     return new Response(JSON.stringify({ok:true}),{headers:{...JSON_HEADERS,"set-cookie":"mn_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"}});
