@@ -63,7 +63,10 @@ export default {
      group.sort((a,b)=>String(a.createdTime||"").localeCompare(String(b.createdTime||"")));
      duplicateCandidates.push(...group.slice(1).map(f=>({...f,reason:"duplicate"})));
     }
-    const archivePattern=/\.(7z|zip|rar|z\d{2}|part\d+|r\d{2})\.(\d{3}|\d{2})$/i;\n    const archiveParts=all.filter(f=>archivePattern.test(f.name||"")).map(f=>({...f,reason:"archive-part"}));\n    const archiveIds=new Set(archiveParts.map(f=>f.id));\n    const largeFiles=all.filter(f=>Number(f.size||0)>=100*1024*1024&&!archiveIds.has(f.id)).map(f=>({...f,reason:"large"}));
+    const archivePattern=/\.(7z|zip|rar|z\d{2}|part\d+|r\d{2})\.(\d{3}|\d{2})$/i;
+    const archiveParts=all.filter(f=>archivePattern.test(f.name||"")).map(f=>({...f,reason:"archive-part"}));
+    const archiveIds=new Set(archiveParts.map(f=>f.id));
+    const largeFiles=all.filter(f=>Number(f.size||0)>=100*1024*1024&&!archiveIds.has(f.id)).map(f=>({...f,reason:"large"}));
     const candidates={}; for(const f of duplicateCandidates)candidates[f.id]="duplicate"; for(const f of largeFiles)candidates[f.id]=candidates[f.id]||"large";
     const scanId=await randomToken();
     await env.OAUTH_KV.put("scan:"+session+":"+scanId,JSON.stringify({candidates}),{expirationTtl:7200});
