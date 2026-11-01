@@ -1,0 +1,40 @@
+name: Deploy Most Nowy Cleaner
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloudflare-worker/**"
+      - ".github/workflows/deploy-cleaner.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate Worker syntax
+        run: node --check cloudflare-worker/worker.js
+
+      - name: Validate deployment config
+        run: |
+          test -f cloudflare-worker/wrangler.jsonc
+          grep -q '"name": "google-drive-cleaner-ai"' cloudflare-worker/wrangler.jsonc
+          grep -q '"binding": "OAUTH_KV"' cloudflare-worker/wrangler.jsonc
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config cloudflare-worker/wrangler.jsonc
