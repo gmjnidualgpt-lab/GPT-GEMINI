@@ -26,6 +26,9 @@ jobs:
       - name: Validate Worker syntax
         run: node --check cloudflare-worker/worker.js
 
+      - name: Run Worker smoke tests
+        run: node --test cloudflare-worker/worker.test.js
+
       - name: Validate deployment config
         run: |
           test -f cloudflare-worker/wrangler.jsonc
@@ -36,5 +39,5 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: 3be7172e01f9c217a48fcbacb539af0f
           command: deploy --config cloudflare-worker/wrangler.jsonc
