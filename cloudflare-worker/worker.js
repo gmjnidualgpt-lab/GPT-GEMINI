@@ -23,7 +23,7 @@ export default {
    if(request.method==="GET" && p==="/auth/google") {
     const state=await randomToken(); await env.OAUTH_KV.put("state:"+state,"1",{expirationTtl:600});
     const redirect=u.origin+"/oauth/callback";
-    const scopes=["openid","email","https://www.googleapis.com/auth/drive.metadata.readonly","https://www.googleapis.com/auth/drive","https://www.googleapis.com/auth/gmail.modify"];
+    const scopes=["openid","email","https://www.googleapis.com/auth/drive"];
     const q=new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,redirect_uri:redirect,response_type:"code",scope:scopes.join(" "),access_type:"offline",prompt:"consent",state});
     return Response.redirect("https://accounts.google.com/o/oauth2/v2/auth?"+q.toString(),302);
    }
@@ -86,6 +86,7 @@ export default {
     for(const id of [...new Set(d.ids)]) { const r=await api(env,session,"/drive/v3/files/"+encodeURIComponent(id),{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({trashed:true})}); results.push({id,ok:r.ok}); }
     return json({results});
    }
+   if(request.method==="POST" && p==="/api/gmail/trash") return json({error:"gmail_cleanup_disabled"},403);
    if(request.method==="POST" && p==="/api/gmail/trash") {
     const d=await request.json(); if(!Array.isArray(d.ids)||!d.ids.length||d.ids.length>10) return json({error:"invalid_ids"},400);
     const results=[]; for(const id of d.ids){if(typeof id!=="string"||!/^[A-Za-z0-9_-]+$/.test(id)){results.push({id,ok:false});continue;} const r=await api(env,session,"/gmail/v1/users/me/messages/"+id+"/trash",{method:"POST"});results.push({id,ok:r.ok});}
