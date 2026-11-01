@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "google-drive-cleaner-ai",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-31",
+  "workers_dev": true,
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "a84c35209d23493fbc240e7574ceed82"
+    }
+  ]
+}
