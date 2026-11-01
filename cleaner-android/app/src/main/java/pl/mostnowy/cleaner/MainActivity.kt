@@ -71,6 +71,12 @@ class MainActivity : Activity() {
             text = "Skanuj ponownie"
             setOnClickListener { checkPermissionsAndScan() }
         }
+        val cloud = Button(this).apply {
+            text = "Otwórz porządkowanie Dysku Google"
+            setOnClickListener {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://google-drive-cleaner-ai.arobert9944.workers.dev/")))
+            }
+        }
         val clearCache = Button(this).apply {
             text = "Wyczyść pamięć podręczną tej aplikacji"
             setOnClickListener {
@@ -90,6 +96,7 @@ class MainActivity : Activity() {
         root.addView(subtitle)
         root.addView(status)
         root.addView(scan)
+        root.addView(cloud)
         root.addView(clearCache)
         root.addView(delete)
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
@@ -104,11 +111,12 @@ class MainActivity : Activity() {
     }
 
     private fun checkPermissionsAndScan() {
-        val permissions = arrayOf(
+        val permissionList = mutableListOf(
             Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_VIDEO,
-            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+            Manifest.permission.READ_MEDIA_VIDEO
         )
+        if (Build.VERSION.SDK_INT >= 34) permissionList.add(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+        val permissions = permissionList.toTypedArray()
         val missing = permissions.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
         if (missing.isNotEmpty()) requestPermissions(missing.toTypedArray(), requestCode) else scan()
     }
