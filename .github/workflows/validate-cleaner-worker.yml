@@ -1,0 +1,24 @@
+name: Validate Most Nowy Cleaner Worker
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloudflare-worker/**"
+      - ".github/workflows/validate-cleaner-worker.yml"
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check Worker JavaScript syntax
+        run: node --check cloudflare-worker/worker.js
+      - name: Check required safety controls
+        run: |
+          grep -q 'confirm!==true' cloudflare-worker/worker.js
+          grep -q 'scan_expired' cloudflare-worker/worker.js
+          grep -q 'archiveParts' cloudflare-worker/worker.js
+          grep -q 'supportsAllDrives=true' cloudflare-worker/worker.js
